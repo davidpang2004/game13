@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chat Pals</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:1rem;}
+#root{width:100%;max-width:480px;}
+.screen{background:#fff;border-radius:24px;padding:24px;margin-top:8px;box-shadow:0 8px 32px rgba(0,0,0,0.18);}
+.title{text-align:center;margin-bottom:20px;}
+.title h1{font-size:32px;font-weight:800;color:#5b21b6;}
+.title p{font-size:14px;color:#888;margin-top:4px;}
+.stars{font-size:22px;letter-spacing:4px;margin-bottom:4px;}
+.section-label{font-size:13px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.name-input{width:100%;padding:12px 14px;font-size:16px;border:2px solid #e0d7f7;border-radius:14px;outline:none;color:#222;margin-bottom:16px;}
+.name-input:focus{border-color:#7c3aed;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:16px;}
+.sel-btn{padding:12px 6px;border-radius:14px;border:2px solid #e0d7f7;background:#faf7ff;cursor:pointer;text-align:center;font-family:inherit;transition:all .15s;}
+.sel-btn.sel{border-color:#7c3aed;background:#ede9fe;}
+.sel-btn .ico{font-size:24px;display:block;margin-bottom:4px;}
+.sel-btn .lbl{font-size:12px;font-weight:700;color:#5b21b6;}
+.sel-btn .sub{font-size:10px;color:#888;margin-top:2px;}
+.timer-opt{padding:10px 4px;border-radius:12px;border:2px solid #e0d7f7;background:#faf7ff;cursor:pointer;font-family:inherit;font-weight:700;font-size:13px;color:#888;text-align:center;}
+.timer-opt.sel{border-color:#7c3aed;background:#ede9fe;color:#5b21b6;}
+.start-btn{width:100%;padding:14px;font-size:17px;font-weight:700;color:#fff;border:none;border-radius:16px;cursor:pointer;}
+.hud{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;position:sticky;top:0;background:#fff;z-index:10;padding:6px 0;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+.lives{font-size:20px;letter-spacing:2px;}
+.hud-score{font-size:13px;font-weight:700;color:#7c3aed;}
+.timer-wrap{margin-bottom:12px;}
+.timer-bar{height:8px;background:#e0d7f7;border-radius:99px;overflow:hidden;}
+.timer-fill{height:100%;border-radius:99px;transition:width .9s linear;}
+.progress-bar{height:5px;background:#e0d7f7;border-radius:99px;margin-bottom:14px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,#7c3aed,#a855f7);border-radius:99px;transition:width .4s;}
+.mission-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.char-face-sm{font-size:30px;background:#ede9fe;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;}
+.char-name{font-size:14px;font-weight:700;color:#5b21b6;}
+.mission-lbl{font-size:11px;color:#888;}
+.chat-area{min-height:140px;margin-bottom:12px;}
+.bubble-wrap{display:flex;align-items:flex-end;gap:8px;margin-bottom:12px;animation:fadeIn .3s ease;}
+.bubble-wrap.ai{flex-direction:row;}
+.bubble-wrap.user{flex-direction:row-reverse;}
+.bubble-avatar{font-size:20px;flex-shrink:0;}
+.bubble{padding:10px 14px;border-radius:18px;font-size:15px;line-height:1.5;max-width:85%;}
+.bubble.ai{background:#ede9fe;color:#3b0764;border-bottom-left-radius:4px;}
+.bubble.user{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border-bottom-right-radius:4px;}
+.bubble.wrong-user{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-bottom-right-radius:4px;}
+.typing{display:flex;gap:4px;padding:10px 14px;background:#ede9fe;border-radius:18px;border-bottom-left-radius:4px;}
+.dot{width:7px;height:7px;background:#a855f7;border-radius:50%;animation:bounce .9s infinite;}
+.dot:nth-child(2){animation-delay:.15s;}
+.dot:nth-child(3){animation-delay:.3s;}
+@keyframes bounce{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-8px);}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.reply-area{display:flex;flex-direction:column;gap:8px;}
+.reply-hint{font-size:12px;color:#aaa;margin-bottom:2px;text-align:center;}
+.reply-btn{padding:11px 15px;border-radius:14px;border:2px solid #e0d7f7;background:#faf7ff;cursor:pointer;font-size:14px;font-family:inherit;color:#3b0764;text-align:left;font-weight:500;transition:all .15s;}
+.reply-btn:hover{border-color:#7c3aed;background:#ede9fe;}
+.reply-btn:disabled{cursor:default;opacity:0.6;}
+.feedback-pop{text-align:center;padding:8px 0;animation:pop .35s ease;}
+@keyframes pop{0%{transform:scale(0);}70%{transform:scale(1.15);}100%{transform:scale(1);}}
+.feedback-emoji{font-size:32px;}
+.feedback-txt{font-size:13px;font-weight:700;margin-top:2px;}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:14px 0;}
+.stat-card{background:#faf7ff;border-radius:14px;padding:12px 6px;text-align:center;}
+.stat-val{font-size:24px;font-weight:800;color:#7c3aed;}
+.stat-lbl{font-size:11px;color:#888;margin-top:2px;}
+.badge-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:10px 0 18px;}
+.badge{background:#fef3c7;border:2px solid #fde68a;border-radius:99px;padding:5px 13px;font-size:12px;font-weight:700;color:#92400e;}
+.big-btn{width:100%;padding:13px;font-size:15px;font-weight:700;border:none;border-radius:16px;cursor:pointer;margin-bottom:8px;}
+.exit-btn{background:none;border:none;font-size:13px;color:#aaa;cursor:pointer;padding:4px 8px;}
+.gameover{text-align:center;padding:8px 0;}
+.gameover .face{font-size:64px;margin-bottom:8px;}
+.gameover h2{font-size:24px;font-weight:800;color:#dc2626;margin-bottom:6px;}
+.gameover p{font-size:14px;color:#666;margin-bottom:20px;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ── Speech ────────────────────────────────────────────────
+var _voice = null;
+function getVoice() {
+  if (_voice) return _voice;
+  var vs = window.speechSynthesis.getVoices();
+  _voice = vs.find(function(v){ return v.name === 'Samantha'; })
+    || vs.find(function(v){ return v.name === 'Google US English'; })
+    || vs.find(function(v){ return v.lang === 'en-US' && v.localService; })
+    || vs.find(function(v){ return v.lang.startsWith('en'); })
+    || null;
+  return _voice;
+}
+window.speechSynthesis.getVoices();
+window.speechSynthesis.onvoiceschanged = function(){ _voice = null; getVoice(); };
+
+var audioQueue = Promise.resolve();
+var audioGeneration = 0;
+
+function resetAudioQueue() {
+  audioGeneration += 1;
+  audioQueue = Promise.resolve();
+  try { window.speechSynthesis.cancel(); } catch (e) {}
+}
+
+function queueAudio(task) {
+  var generation = audioGeneration;
+  audioQueue = audioQueue
+    .catch(function(){})
+    .then(function(){
+      if (generation !== audioGeneration) return;
+      return task(generation);
+    })
+    .catch(function(){});
+  return audioQueue;
+}
+
+function speakText(text, generation) {
+  return new Promise(function(resolve) {
+    try {
+      if (generation !== audioGeneration) return resolve();
+      var u = new SpeechSynthesisUtterance(text);
+      var v = getVoice();
+      if (v) u.voice = v;
+      u.lang = 'en-US';
+      u.rate = 0.95;
+      u.pitch = 1.2;
+      u.volume = 1;
+      u.onend = resolve;
+      u.onerror = resolve;
+      window.speechSynthesis.speak(u);
+    } catch (e) {
+      resolve();
+    }
+  });
+}
+
+function say(text) {
+  return queueAudio(function(generation) {
+    return speakText(text, generation);
+  });
+}
+
+function saySequence(lines) {
+  (lines || []).forEach(function(line) {
+    say(line);
+  });
+}
+
+function rnd(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+var PHRASES = {
+  correct: ['Great job!','Awesome choice!','You got it!','Well done!','Fantastic!','That is correct!','Brilliant!'],
+  perfect: ['Amazing! Perfect answer!','Outstanding! You are so smart!','Excellent! Full marks!','Superb! You nailed it!'],
+  wrong:   ['Sorry, try again next time!','Oops! Not quite right!','Nice try! Keep going!','Almost! You will get the next one!','Do not give up!'],
+  timeout: ['Time is up! Keep going!','Too slow! Be quicker next time!','Time ran out! You can do it!'],
+  gameover:['Game over! Better luck next time!','Oh no! You ran out of hearts!'],
+  start:   ['Good luck! You can do it!','Let us go! Have fun!','Ready? Here we go!']
+};
+
+// ── Question Bank ─────────────────────────────────────────
+var QUESTIONS = {
+"5-6":[
+  {ai:"What color is the sky on a sunny day?",replies:[{text:"Blue!",score:3,reaction:"Yes! The sky is bright blue on a sunny day! Great job!",correct:true},{text:"I think it is white.",score:2,reaction:"Good try! The sky is actually blue, but clouds are white!",correct:true},{text:"The sky is green like grass.",score:0,reaction:"Oops! The sky is blue, not green. Keep going, you can do it!",correct:false}]},
+  {ai:"How many legs does a dog have?",replies:[{text:"Four legs!",score:3,reaction:"That is right! Dogs have four legs. You are so smart!",correct:true},{text:"I think dogs have two legs.",score:0,reaction:"Oops! Dogs have four legs, not two. Do not worry, try again!",correct:false},{text:"Dogs have four legs like cats too.",score:2,reaction:"Great thinking! Yes, dogs and cats both have four legs!",correct:true}]},
+  {ai:"What do we call baby cats?",replies:[{text:"Kittens!",score:3,reaction:"Perfect! Baby cats are called kittens. Well done!",correct:true},{text:"Puppies!",score:0,reaction:"Oops! Puppies are baby dogs. Baby cats are kittens!",correct:false},{text:"I think they are called cubs.",score:2,reaction:"Good guess! Actually baby cats are kittens and baby bears are cubs!",correct:true}]},
+  {ai:"What color is a banana?",replies:[{text:"Yellow!",score:3,reaction:"Correct! Bananas are yellow. You are a star!",correct:true},{text:"Bananas are red.",score:0,reaction:"Oops! Bananas are yellow, not red. Keep trying!",correct:false},{text:"Yellow and sometimes a little green.",score:2,reaction:"Wow! You noticed that unripe bananas are green too! Clever!",correct:true}]},
+  {ai:"What sound does a cow make?",replies:[{text:"Moo!",score:3,reaction:"Yes! Cows say moo! You got it right!",correct:true},{text:"Cows say woof woof!",score:0,reaction:"Oops! Woof is what dogs say. Cows say moo!",correct:false},{text:"A low mooing sound.",score:2,reaction:"Great answer! Yes it is a low mooing sound!",correct:true}]},
+  {ai:"How many fingers do we have on one hand?",replies:[{text:"Five fingers!",score:3,reaction:"That is right! Five fingers on each hand. Fantastic!",correct:true},{text:"We have ten fingers on one hand.",score:0,reaction:"Oops! We have ten fingers total but only five on one hand!",correct:false},{text:"I think it is five.",score:2,reaction:"Yes, five is correct! Well done!",correct:true}]},
+  {ai:"What do fish live in?",replies:[{text:"Fish live in water!",score:3,reaction:"Perfect! Fish live in water. You are so clever!",correct:true},{text:"Fish live in trees.",score:0,reaction:"Oops! Fish live in water, not trees. Keep going!",correct:false},{text:"In the ocean or rivers.",score:2,reaction:"Great answer! Fish live in oceans, rivers, and lakes!",correct:true}]},
+  {ai:"What do bees make?",replies:[{text:"Honey!",score:3,reaction:"Yes! Bees make delicious honey. Amazing answer!",correct:true},{text:"Bees make chocolate.",score:0,reaction:"Oops! Bees make honey, not chocolate. Keep trying!",correct:false},{text:"They make honey in their hive.",score:2,reaction:"Great detail! Bees make honey inside their hive!",correct:true}]},
+  {ai:"What color is grass?",replies:[{text:"Green!",score:3,reaction:"That is right! Grass is green. Well done!",correct:true},{text:"Grass is purple.",score:0,reaction:"Oops! Grass is green, not purple. Do not worry!",correct:false},{text:"Green, and it can turn yellow if it is dry.",score:2,reaction:"Wow, you really know your stuff! Yellow dry grass is called straw!",correct:true}]},
+  {ai:"How many eyes do we have?",replies:[{text:"Two eyes!",score:3,reaction:"Correct! We have two eyes. Great job!",correct:true},{text:"We have four eyes.",score:0,reaction:"Oops! We have two eyes, not four. Keep going!",correct:false},{text:"Two, one on each side of our nose.",score:2,reaction:"Excellent observation! One eye on each side of our nose!",correct:true}]},
+  {ai:"What animal says woof?",replies:[{text:"A dog!",score:3,reaction:"Yes! Dogs say woof! You are brilliant!",correct:true},{text:"A fish says woof.",score:0,reaction:"Oops! Fish do not make sounds. Dogs say woof!",correct:false},{text:"Dogs bark and say woof!",score:2,reaction:"Great! Dogs bark and that sound is called woof!",correct:true}]},
+  {ai:"Which animal has a very long neck?",replies:[{text:"A giraffe!",score:3,reaction:"Yes! Giraffes have the longest necks of any animal. Amazing!",correct:true},{text:"A fish has the longest neck.",score:0,reaction:"Oops! Fish do not have necks. Giraffes have long necks!",correct:false},{text:"Giraffes use their long necks to reach tall trees.",score:2,reaction:"Wow! You know why giraffes have long necks! So impressive!",correct:true}]},
+  {ai:"What is 2 + 2?",replies:[{text:"4!",score:3,reaction:"Correct! 2 plus 2 equals 4. You are a math star!",correct:true},{text:"2 plus 2 is 5.",score:0,reaction:"Oops! 2 plus 2 equals 4, not 5. Keep trying!",correct:false},{text:"Four! I counted on my fingers.",score:2,reaction:"Brilliant! Counting on fingers is a great way to add!",correct:true}]},
+  {ai:"What season has lots of snow?",replies:[{text:"Winter!",score:3,reaction:"Yes! Winter is the cold snowy season. Great job!",correct:true},{text:"Summer has the most snow.",score:0,reaction:"Oops! Summer is hot! Winter is the snowy season!",correct:false},{text:"Winter, and we can build snowmen!",score:2,reaction:"Wonderful! Snowmen are one of the best things about winter!",correct:true}]},
+  {ai:"What do caterpillars turn into?",replies:[{text:"Butterflies!",score:3,reaction:"Amazing! Caterpillars turn into beautiful butterflies!",correct:true},{text:"Caterpillars turn into fish.",score:0,reaction:"Oops! Caterpillars turn into butterflies, not fish!",correct:false},{text:"They turn into butterflies inside a cocoon.",score:2,reaction:"Excellent! The cocoon is where the magic happens!",correct:true}]},
+  {ai:"What is a baby dog called?",replies:[{text:"A puppy!",score:3,reaction:"Perfect! Baby dogs are called puppies. So cute!",correct:true},{text:"A baby dog is called a kitten.",score:0,reaction:"Oops! Kittens are baby cats. Baby dogs are puppies!",correct:false},{text:"Puppies! They are so fluffy and cute.",score:2,reaction:"Yes! Puppies are adorable little dogs!",correct:true}]},
+  {ai:"What do plants need to grow?",replies:[{text:"Sunlight and water!",score:3,reaction:"Brilliant! Plants need sunlight and water to grow!",correct:true},{text:"Plants need pizza to grow.",score:0,reaction:"Oops! Plants need sunlight and water, not pizza!",correct:false},{text:"Sun, water, and soil.",score:2,reaction:"Fantastic! You named three things plants need to grow!",correct:true}]},
+  {ai:"How many days are in a week?",replies:[{text:"Seven days!",score:3,reaction:"Perfect! There are seven days in a week. Well done!",correct:true},{text:"There are ten days in a week.",score:0,reaction:"Oops! There are seven days in a week, not ten!",correct:false},{text:"Seven! Monday Tuesday Wednesday Thursday Friday Saturday Sunday.",score:2,reaction:"Wow! You know all seven days! That is super impressive!",correct:true}]},
+  {ai:"What do we call the water that falls from clouds?",replies:[{text:"Rain!",score:3,reaction:"Yes! Water falls from clouds as rain. Brilliant!",correct:true},{text:"Water from clouds is called fire.",score:0,reaction:"Oops! Water from clouds is called rain, not fire!",correct:false},{text:"Rain, and when it is frozen it becomes snow!",score:2,reaction:"Excellent! You know about different types of precipitation!",correct:true}]},
+  {ai:"How many legs does a spider have?",replies:[{text:"Eight legs!",score:3,reaction:"Amazing! Spiders have eight legs. You are so smart!",correct:true},{text:"Spiders have two legs.",score:0,reaction:"Oops! Spiders have eight legs. Humans have two legs!",correct:false},{text:"Eight, which is why they are called arachnids not insects!",score:2,reaction:"Incredible! You know that spiders are arachnids! That is advanced!",correct:true}]},
+  {ai:"What number comes after 9?",replies:[{text:"10!",score:3,reaction:"Yes! After 9 comes 10. You are a number star!",correct:true},{text:"After 9 comes 3.",score:0,reaction:"Oops! After 9 comes 10. You are doing great, keep going!",correct:false},{text:"10! And then 11, 12, 13...",score:2,reaction:"Great! You can count forwards really well!",correct:true}]},
+  {ai:"What shape has three sides?",replies:[{text:"A triangle!",score:3,reaction:"Perfect! A triangle has three sides. You are great at shapes!",correct:true},{text:"A circle has three sides.",score:0,reaction:"Oops! A circle has no sides. A triangle has three sides!",correct:false},{text:"A triangle! Like a slice of pizza.",score:2,reaction:"Great comparison! Pizza slices are shaped like triangles!",correct:true}]},
+  {ai:"What color do you get when you mix red and blue?",replies:[{text:"Purple!",score:3,reaction:"Yes! Red plus blue makes purple. You are a colour expert!",correct:true},{text:"Red and blue make orange.",score:0,reaction:"Oops! Red and blue make purple. Red and yellow make orange!",correct:false},{text:"Purple, like grapes!",score:2,reaction:"Great! Purple like grapes or lavender flowers!",correct:true}]},
+  {ai:"What is the opposite of hot?",replies:[{text:"Cold!",score:3,reaction:"Correct! Hot and cold are opposites. Brilliant!",correct:true},{text:"The opposite of hot is also hot.",score:0,reaction:"Oops! The opposite of hot is cold!",correct:false},{text:"Cold! Like ice cream or snow.",score:2,reaction:"Great examples! Ice cream and snow are both very cold!",correct:true}]},
+  {ai:"What do we say to be polite when we want something?",replies:[{text:"Please!",score:3,reaction:"Wonderful! Saying please is very polite and kind!",correct:true},{text:"We should shout really loud to get what we want.",score:0,reaction:"Oops! Shouting is not polite. Saying please is the kind way!",correct:false},{text:"Please and thank you are both important!",score:2,reaction:"You are so right! Please and thank you show great manners!",correct:true}]},
+  {ai:"What animal is black and white and looks like a horse with stripes?",replies:[{text:"A zebra!",score:3,reaction:"Correct! Zebras are black and white striped animals!",correct:true},{text:"A banana is black and white with stripes.",score:0,reaction:"Oops! Bananas are yellow! Zebras are black and white with stripes!",correct:false},{text:"A zebra! Every zebra has a unique pattern of stripes.",score:2,reaction:"Amazing! Just like fingerprints, no two zebras have the same stripes!",correct:true}]},
+  {ai:"Where do birds live?",replies:[{text:"In nests!",score:3,reaction:"Yes! Birds build nests to live in. Well done!",correct:true},{text:"Birds live underwater.",score:0,reaction:"Oops! Fish live underwater. Birds live in nests in trees!",correct:false},{text:"In nests they build with twigs and leaves.",score:2,reaction:"Wonderful detail! Birds are amazing builders!",correct:true}]},
+  {ai:"What is 1 + 1?",replies:[{text:"2!",score:3,reaction:"Correct! 1 plus 1 equals 2. You are amazing!",correct:true},{text:"1 plus 1 is 11.",score:0,reaction:"Oops! 1 plus 1 is 2. You can do it!",correct:false},{text:"2! That was easy for me!",score:2,reaction:"Great confidence! You are getting really good at adding!",correct:true}]},
+  {ai:"What animal gives us milk that we drink?",replies:[{text:"A cow!",score:3,reaction:"Correct! Cows give us milk. Great answer!",correct:true},{text:"Milk comes from butterflies.",score:0,reaction:"Oops! Butterflies do not give milk. Cows give us milk!",correct:false},{text:"Cows! Goats also give milk that people drink.",score:2,reaction:"Excellent! Goat milk is very popular too. You know a lot!",correct:true}]},
+  {ai:"How many legs does a cat have?",replies:[{text:"Four!",score:3,reaction:"Yes! Cats have four legs just like dogs. Great job!",correct:true},{text:"Cats have eight legs like spiders.",score:0,reaction:"Oops! Spiders have eight legs. Cats have four legs!",correct:false},{text:"Four legs and they are very good at jumping!",score:2,reaction:"Great! Cats are incredible jumpers with their four powerful legs!",correct:true}]},
+  {ai:"What sound does a duck make?",replies:[{text:"Quack!",score:3,reaction:"Quack quack! Yes that is correct! Great answer!",correct:true},{text:"Ducks say meow.",score:0,reaction:"Oops! Meow is what cats say. Ducks say quack!",correct:false},{text:"Quack! And they also like to swim in ponds.",score:2,reaction:"Yes! Ducks quack and love swimming. You know a lot about ducks!",correct:true}]},
+  {ai:"What color is the sun?",replies:[{text:"Yellow!",score:3,reaction:"Great! The sun looks yellow in the sky. Well done!",correct:true},{text:"The sun is dark blue.",score:0,reaction:"Oops! The sun is yellow and very bright. Never look right at it!",correct:false},{text:"Yellow and it gives us light and warmth.",score:2,reaction:"Brilliant! The sun gives us both light and heat!",correct:true}]},
+  {ai:"What falls from trees in autumn?",replies:[{text:"Leaves!",score:3,reaction:"Yes! Leaves fall from trees in autumn. Beautiful!",correct:true},{text:"Televisions fall from trees in autumn.",score:0,reaction:"Oops! Televisions do not grow on trees! Leaves fall in autumn!",correct:false},{text:"Leaves change colour and fall in autumn.",score:2,reaction:"Brilliant! Leaves turn red, orange and yellow before falling!",correct:true}]},
+  {ai:"What do we use to brush our teeth?",replies:[{text:"A toothbrush and toothpaste!",score:3,reaction:"Perfect! Toothbrush and toothpaste keep our teeth healthy!",correct:true},{text:"We brush teeth with a spoon.",score:0,reaction:"Oops! We use a toothbrush with toothpaste to clean our teeth!",correct:false},{text:"A toothbrush twice a day keeps cavities away!",score:2,reaction:"Great advice! Brushing twice a day is very important!",correct:true}]},
+  {ai:"What do we say after someone says thank you?",replies:[{text:"You are welcome!",score:3,reaction:"Perfect manners! Saying you are welcome is so kind!",correct:true},{text:"We say goodbye after thank you.",score:0,reaction:"Oops! We say you are welcome after thank you!",correct:false},{text:"You are welcome, or no problem!",score:2,reaction:"Great! Both are polite responses. You have wonderful manners!",correct:true}]},
+  {ai:"What is a group of fish called?",replies:[{text:"A school of fish!",score:3,reaction:"Incredible! A group of fish is called a school. Amazing!",correct:true},{text:"A group of fish is called a forest.",score:0,reaction:"Oops! A group of fish is called a school. Forests have trees!",correct:false},{text:"A school of fish. Lots of fish swimming together.",score:2,reaction:"Great! Schools of fish swim together to stay safe from predators!",correct:true}]},
+  {ai:"Where do we go to learn and study with other children?",replies:[{text:"School!",score:3,reaction:"Correct! We go to school to learn. Learning is wonderful!",correct:true},{text:"We go to the ocean to study.",score:0,reaction:"Oops! We go to school to learn, not the ocean!",correct:false},{text:"School! I like learning new things there.",score:2,reaction:"That is a great attitude! Loving to learn is the best gift!",correct:true}]},
+  {ai:"What do we say when we hurt someone by mistake?",replies:[{text:"Sorry!",score:3,reaction:"That shows real kindness! Saying sorry is very important!",correct:true},{text:"We should run away when we hurt someone.",score:0,reaction:"Oops! We should say sorry and make sure they are okay!",correct:false},{text:"Sorry and I also ask if they are okay.",score:2,reaction:"Wonderful! Saying sorry AND checking on someone is very caring!",correct:true}]},
+  {ai:"What is the biggest animal that lives in the ocean?",replies:[{text:"The blue whale!",score:3,reaction:"Amazing! Blue whales are the biggest animals on Earth!",correct:true},{text:"The biggest ocean animal is a goldfish.",score:0,reaction:"Oops! Goldfish are tiny! The blue whale is the biggest!",correct:false},{text:"Blue whales are giant and very gentle.",score:2,reaction:"Yes! Blue whales are huge but they eat tiny shrimp called krill!",correct:true}]},
+  {ai:"How many wheels does a bicycle have?",replies:[{text:"Two wheels!",score:3,reaction:"Correct! Bicycles have two wheels. Great job!",correct:true},{text:"Bicycles have six wheels.",score:0,reaction:"Oops! Bicycles have two wheels. A car has four!",correct:false},{text:"Two wheels, and you have to balance to ride it!",score:2,reaction:"Exactly! Balancing on two wheels is what makes riding a bike fun!",correct:true}]},
+  {ai:"What is the shape of an egg?",replies:[{text:"Oval!",score:3,reaction:"Correct! Eggs are oval shaped. Great observation!",correct:true},{text:"Eggs are perfectly square.",score:0,reaction:"Oops! Eggs are oval, not square!",correct:false},{text:"Oval, a bit like a stretched circle.",score:2,reaction:"Great description! An oval is like a circle that has been stretched!",correct:true}]},
+  {ai:"What do we use to see things that are very far away?",replies:[{text:"Binoculars or a telescope!",score:3,reaction:"Excellent! Binoculars and telescopes help us see far away things!",correct:true},{text:"We use a spoon to see far away things.",score:0,reaction:"Oops! We use binoculars or telescopes to see far away things!",correct:false},{text:"A telescope for stars and binoculars for birds and nature.",score:2,reaction:"Great distinction! Telescopes look at space, binoculars at nature!",correct:true}]},
+  {ai:"Which fruit is yellow and long and monkeys love to eat?",replies:[{text:"A banana!",score:3,reaction:"Perfect! Bananas are yellow, long and monkeys love them!",correct:true},{text:"Monkeys love to eat rocks.",score:0,reaction:"Oops! Monkeys eat bananas and other fruits, not rocks!",correct:false},{text:"Bananas! And I love them too!",score:2,reaction:"Wonderful! Bananas are delicious and full of energy!",correct:true}]},
+  {ai:"What do we call the meal we eat at the end of the day?",replies:[{text:"Dinner or supper!",score:3,reaction:"Correct! Dinner or supper is the evening meal. Well done!",correct:true},{text:"The evening meal is called breakfast.",score:0,reaction:"Oops! Breakfast is the morning meal. Dinner is in the evening!",correct:false},{text:"Dinner! My favourite meal of the day.",score:2,reaction:"Dinner is a great time for families to eat together!",correct:true}]},
+  {ai:"What do we call the shiny things we see in the sky at night?",replies:[{text:"Stars!",score:3,reaction:"Beautiful answer! Stars shine in the night sky!",correct:true},{text:"The shiny things at night are called sandwiches.",score:0,reaction:"Oops! Stars are the shiny things at night, not sandwiches!",correct:false},{text:"Stars! And the biggest one we can see is called the Sun.",score:2,reaction:"Wow! You are right, the Sun is our nearest star!",correct:true}]},
+  {ai:"What color is an orange?",replies:[{text:"Orange of course!",score:3,reaction:"The fruit and the colour share the same name! Great answer!",correct:true},{text:"Oranges are bright pink.",score:0,reaction:"Oops! Oranges are orange coloured. That is why they share the name!",correct:false},{text:"Orange! Both the fruit and the colour are called orange.",score:2,reaction:"Great observation! The fruit was named first and then the colour!",correct:true}]},
+  {ai:"What body part do we use to smell?",replies:[{text:"Our nose!",score:3,reaction:"Correct! We smell with our nose. Great thinking!",correct:true},{text:"We smell with our ears.",score:0,reaction:"Oops! Ears are for hearing. We smell with our nose!",correct:false},{text:"Our nose, and dogs have a much better sense of smell than us!",score:2,reaction:"Amazing fact! Dogs can smell up to 100 times better than humans!",correct:true}]},
+  {ai:"What is the name of the animal that has a shell on its back?",replies:[{text:"A tortoise or turtle!",score:3,reaction:"Correct! Tortoises and turtles carry their shells everywhere!",correct:true},{text:"The animal with a shell on its back is a dog.",score:0,reaction:"Oops! Dogs do not have shells. Tortoises and turtles do!",correct:false},{text:"A tortoise lives on land and a turtle lives in water!",score:2,reaction:"Excellent! You know the difference between a tortoise and a turtle!",correct:true}]},
+  {ai:"What do we call the home where we live with our family?",replies:[{text:"A house or home!",score:3,reaction:"Correct! We live in a house or home with our family!",correct:true},{text:"We live in a swimming pool with our family.",score:0,reaction:"Oops! We live in a house or home, not a swimming pool!",correct:false},{text:"A house! Some people live in flats or apartments too.",score:2,reaction:"Great! Houses, flats and apartments are all places people call home!",correct:true}]}
+],
+"7-9":[
+  {ai:"What planet do we live on?",replies:[{text:"Earth!",score:3,reaction:"Correct! We live on planet Earth. Well done!",correct:true},{text:"We live on planet Mars.",score:0,reaction:"Oops! Mars is our neighbour but we live on Earth!",correct:false},{text:"Earth, the third planet from the Sun.",score:2,reaction:"Great detail! Earth is the third planet from the Sun!",correct:true}]},
+  {ai:"What is the closest star to Earth?",replies:[{text:"The Sun!",score:3,reaction:"Brilliant! The Sun is our closest star. Amazing!",correct:true},{text:"The closest star is called Harry.",score:0,reaction:"Oops! The closest star to Earth is the Sun!",correct:false},{text:"The Sun, about 150 million kilometres away.",score:2,reaction:"Wow, you know the distance too! That is impressive!",correct:true}]},
+  {ai:"What do plants use to make their own food?",replies:[{text:"Sunlight, water and carbon dioxide!",score:3,reaction:"Excellent! Photosynthesis uses sunlight, water and CO2!",correct:true},{text:"Plants make food from sand and rocks.",score:0,reaction:"Oops! Plants use sunlight, water and carbon dioxide to make food!",correct:false},{text:"Sunlight and water through photosynthesis.",score:2,reaction:"Great! Photosynthesis is the name of this amazing process!",correct:true}]},
+  {ai:"How many continents are there on Earth?",replies:[{text:"Seven!",score:3,reaction:"Correct! There are seven continents. Great geography!",correct:true},{text:"There are twelve continents on Earth.",score:0,reaction:"Oops! There are seven continents on Earth!",correct:false},{text:"Seven! Asia, Africa, North America, South America, Antarctica, Europe, Australia.",score:2,reaction:"Wow, you named all seven! That is exceptional!",correct:true}]},
+  {ai:"What is the largest ocean on Earth?",replies:[{text:"The Pacific Ocean!",score:3,reaction:"Correct! The Pacific is the largest ocean. Well done!",correct:true},{text:"The largest ocean is called the Chocolate Ocean.",score:0,reaction:"Oops! The Pacific Ocean is the largest, not a chocolate one!",correct:false},{text:"The Pacific Ocean covers more than 30 percent of Earth.",score:2,reaction:"Incredible fact! The Pacific really is enormous!",correct:true}]},
+  {ai:"What gas do humans breathe out?",replies:[{text:"Carbon dioxide!",score:3,reaction:"Brilliant! We breathe out carbon dioxide. Great science!",correct:true},{text:"Humans breathe out chocolate milkshake.",score:0,reaction:"Oops! We breathe out carbon dioxide, not chocolate milkshake!",correct:false},{text:"Carbon dioxide, which plants then use to make food.",score:2,reaction:"Excellent! There is a wonderful cycle between humans and plants!",correct:true}]},
+  {ai:"What is the fastest land animal?",replies:[{text:"The cheetah!",score:3,reaction:"Yes! Cheetahs can run up to 120 km per hour. Amazing!",correct:true},{text:"The slowest land animal is actually the fastest.",score:0,reaction:"Oops! The cheetah is the fastest land animal!",correct:false},{text:"The cheetah, reaching speeds up to 120 kilometres per hour!",score:2,reaction:"Great! And they can only keep that speed for short bursts!",correct:true}]},
+  {ai:"What is the longest river in the world?",replies:[{text:"The Nile!",score:3,reaction:"Correct! The Nile in Africa is the world's longest river!",correct:true},{text:"The shortest river is the longest.",score:0,reaction:"Oops! The Nile in Africa is the world's longest river!",correct:false},{text:"The Nile, flowing through Egypt into the Mediterranean Sea.",score:2,reaction:"Excellent geography! The Nile has supported civilisations for thousands of years!",correct:true}]},
+  {ai:"What is the capital city of France?",replies:[{text:"Paris!",score:3,reaction:"Oui! Paris is the capital of France. Magnifique!",correct:true},{text:"The capital of France is Tokyo.",score:0,reaction:"Oops! Tokyo is the capital of Japan. Paris is the capital of France!",correct:false},{text:"Paris, famous for the Eiffel Tower.",score:2,reaction:"Great! The Eiffel Tower is one of the most visited places in the world!",correct:true}]},
+  {ai:"How many sides does a hexagon have?",replies:[{text:"Six sides!",score:3,reaction:"Perfect! Hex means six so a hexagon has six sides!",correct:true},{text:"A hexagon has three sides.",score:0,reaction:"Oops! Three sides is a triangle. A hexagon has six sides!",correct:false},{text:"Six sides, like a honeycomb cell made by bees!",score:2,reaction:"Wonderful! Bees naturally build perfect hexagons. Nature is amazing!",correct:true}]},
+  {ai:"What is the chemical formula for water?",replies:[{text:"H2O!",score:3,reaction:"Brilliant! Water is H2O, two hydrogen and one oxygen. Excellent!",correct:true},{text:"The formula for water is ABC.",score:0,reaction:"Oops! Water is H2O, meaning two hydrogen atoms and one oxygen atom!",correct:false},{text:"H2O, which means two hydrogen atoms bonded to one oxygen.",score:2,reaction:"Fantastic! You understand the formula AND what it means!",correct:true}]},
+  {ai:"Which planet is known for its rings?",replies:[{text:"Saturn!",score:3,reaction:"Correct! Saturn has beautiful rings made of ice and rock!",correct:true},{text:"The planet with rings is called Dinner.",score:0,reaction:"Oops! Saturn is the planet famous for its rings!",correct:false},{text:"Saturn, and its rings are made of ice chunks and rocks.",score:2,reaction:"Great detail! Saturn has hundreds of rings stretching out wide!",correct:true}]},
+  {ai:"What is the hardest natural substance on Earth?",replies:[{text:"Diamond!",score:3,reaction:"Correct! Diamonds are the hardest natural substance!",correct:true},{text:"Cotton is the hardest substance on Earth.",score:0,reaction:"Oops! Cotton is very soft. Diamonds are the hardest natural substance!",correct:false},{text:"Diamond, which is made of pure carbon atoms tightly bonded.",score:2,reaction:"Excellent! The way carbon atoms bond creates that incredible hardness!",correct:true}]},
+  {ai:"What is 7 multiplied by 8?",replies:[{text:"56!",score:3,reaction:"Correct! 7 times 8 equals 56. Great maths skills!",correct:true},{text:"7 times 8 is 100.",score:0,reaction:"Oops! 7 times 8 is 56, not 100. Keep practising!",correct:false},{text:"56! I know my times tables well.",score:2,reaction:"Wonderful! Knowing times tables makes all maths much easier!",correct:true}]},
+  {ai:"Which animal can change its colour to camouflage?",replies:[{text:"A chameleon!",score:3,reaction:"Yes! Chameleons change colour. Fascinating creatures!",correct:true},{text:"A rock can change colour to camouflage.",score:0,reaction:"Oops! Rocks do not change colour. Chameleons are masters of camouflage!",correct:false},{text:"Chameleons, and octopuses can also change colour!",score:2,reaction:"Amazing! Both chameleons and octopuses are colour-change champions!",correct:true}]},
+  {ai:"What is the main language spoken in Brazil?",replies:[{text:"Portuguese!",score:3,reaction:"Correct! Brazil speaks Portuguese, not Spanish. Great knowledge!",correct:true},{text:"People in Brazil speak French.",score:0,reaction:"Oops! Brazil was colonised by Portugal so they speak Portuguese!",correct:false},{text:"Portuguese, because Brazil was colonised by Portugal.",score:2,reaction:"Excellent! You understand the historical reason. Very impressive!",correct:true}]},
+  {ai:"What force pulls everything towards the ground?",replies:[{text:"Gravity!",score:3,reaction:"Correct! Gravity pulls everything down. Great science!",correct:true},{text:"The force that pulls things down is called Tuesday.",score:0,reaction:"Oops! Gravity is the force that pulls everything down!",correct:false},{text:"Gravity, discovered by Isaac Newton when he saw an apple fall.",score:2,reaction:"Great story! Newton developed his theory of gravity from that observation!",correct:true}]},
+  {ai:"How many bones are in the adult human body?",replies:[{text:"206 bones!",score:3,reaction:"Incredible! The adult human body has 206 bones. Excellent!",correct:true},{text:"The human body has 5 bones total.",score:0,reaction:"Oops! We have 206 bones in our body, not just 5!",correct:false},{text:"206, but babies are born with around 270 which fuse together!",score:2,reaction:"Fascinating fact! Yes, babies have more bones that fuse as they grow!",correct:true}]},
+  {ai:"What do we call animals that eat only plants?",replies:[{text:"Herbivores!",score:3,reaction:"Brilliant! Plant-eating animals are called herbivores!",correct:true},{text:"Animals that eat only plants are called astronauts.",score:0,reaction:"Oops! Astronauts go to space. Plant-eaters are called herbivores!",correct:false},{text:"Herbivores, like cows, rabbits, and elephants.",score:2,reaction:"Great examples! All three are classic herbivores!",correct:true}]},
+  {ai:"What is the powerhouse of the cell?",replies:[{text:"The mitochondria!",score:3,reaction:"Yes! Mitochondria produce energy for the cell. Excellent biology!",correct:true},{text:"The powerhouse of the cell is the swimming pool.",score:0,reaction:"Oops! The mitochondria is the powerhouse of the cell!",correct:false},{text:"Mitochondria, which produce ATP energy for cells to use.",score:2,reaction:"Outstanding! ATP is the energy currency of the cell. Brilliant!",correct:true}]},
+  {ai:"What is 25 percent of 200?",replies:[{text:"50!",score:3,reaction:"Correct! 25 percent of 200 is 50. Great maths!",correct:true},{text:"25 percent of 200 is 1000.",score:0,reaction:"Oops! 25 percent of 200 is 50. One quarter of 200!",correct:false},{text:"50, because 25 percent is the same as one quarter.",score:2,reaction:"Excellent! Understanding percentages as fractions is very smart!",correct:true}]},
+  {ai:"Who wrote Romeo and Juliet?",replies:[{text:"William Shakespeare!",score:3,reaction:"Correct! Shakespeare wrote Romeo and Juliet. Classic literature!",correct:true},{text:"Romeo and Juliet was written by a dinosaur.",score:0,reaction:"Oops! William Shakespeare wrote Romeo and Juliet in the 1590s!",correct:false},{text:"Shakespeare, who lived in England in the 1500s and 1600s.",score:2,reaction:"Great! Shakespeare is considered the greatest writer in English history!",correct:true}]},
+  {ai:"What is the capital of Australia?",replies:[{text:"Canberra!",score:3,reaction:"Correct! Canberra is Australia's capital, not Sydney!",correct:true},{text:"The capital of Australia is London.",score:0,reaction:"Oops! London is the capital of England. Australia's capital is Canberra!",correct:false},{text:"Canberra, which many people confuse with Sydney.",score:2,reaction:"Great! Sydney is bigger but Canberra became the capital as a compromise!",correct:true}]},
+  {ai:"What is the largest planet in our solar system?",replies:[{text:"Jupiter!",score:3,reaction:"Correct! Jupiter is the biggest planet. Amazing!",correct:true},{text:"The largest planet is called Tiny.",score:0,reaction:"Oops! The largest planet is Jupiter, not Tiny!",correct:false},{text:"Jupiter, which is so big that all other planets could fit inside it!",score:2,reaction:"Mind-blowing! Jupiter is truly enormous!",correct:true}]},
+  {ai:"What is the square root of 64?",replies:[{text:"8!",score:3,reaction:"Correct! 8 times 8 equals 64. Great maths!",correct:true},{text:"The square root of 64 is 200.",score:0,reaction:"Oops! The square root of 64 is 8 because 8 times 8 equals 64!",correct:false},{text:"8, because 8 multiplied by itself equals 64.",score:2,reaction:"Excellent explanation! You understand what square roots mean!",correct:true}]},
+  {ai:"What causes day and night on Earth?",replies:[{text:"Earth rotating on its axis!",score:3,reaction:"Brilliant! Day and night happen because Earth spins on its axis!",correct:true},{text:"Day and night are caused by the moon painting the sky.",score:0,reaction:"Oops! Day and night happen because Earth rotates on its axis!",correct:false},{text:"Earth's rotation, taking 24 hours to complete one full spin.",score:2,reaction:"Perfect! One full rotation equals one day of 24 hours!",correct:true}]},
+  {ai:"What is the freezing point of water in Celsius?",replies:[{text:"Zero degrees Celsius!",score:3,reaction:"Correct! Water freezes at 0 degrees Celsius. Great science!",correct:true},{text:"Water freezes at 100 degrees Celsius.",score:0,reaction:"Oops! Water freezes at 0 degrees. It boils at 100 degrees!",correct:false},{text:"Zero degrees Celsius, and it boils at 100 degrees.",score:2,reaction:"Brilliant! You know both the freezing and boiling points!",correct:true}]},
+  {ai:"What type of animal is a dolphin?",replies:[{text:"A mammal!",score:3,reaction:"Correct! Dolphins are mammals that live in the ocean!",correct:true},{text:"Dolphins are a type of insect.",score:0,reaction:"Oops! Dolphins are mammals, not insects. They breathe air!",correct:false},{text:"A mammal, which means they breathe air and feed their babies milk.",score:2,reaction:"Excellent! Dolphins are warm-blooded mammals like us!",correct:true}]},
+  {ai:"How many players are on a football team on the field?",replies:[{text:"Eleven!",score:3,reaction:"Correct! Each football team has 11 players on the field!",correct:true},{text:"Each football team has 100 players on the field.",score:0,reaction:"Oops! Each team has 11 players on the field at a time!",correct:false},{text:"Eleven, including the goalkeeper and ten outfield players.",score:2,reaction:"Great breakdown! The goalkeeper has a very important job!",correct:true}]},
+  {ai:"What is the main ingredient in bread?",replies:[{text:"Flour!",score:3,reaction:"Correct! Flour is the main ingredient in bread. Great!",correct:true},{text:"The main ingredient in bread is orange juice.",score:0,reaction:"Oops! Flour is the main ingredient. Orange juice is not in bread!",correct:false},{text:"Flour, combined with water, yeast and salt to make dough.",score:2,reaction:"Perfect! Those four ingredients make a basic bread loaf!",correct:true}]},
+  {ai:"What is the name of the gas that makes up most of Earth's atmosphere?",replies:[{text:"Nitrogen!",score:3,reaction:"Correct! Nitrogen makes up about 78 percent of our atmosphere!",correct:true},{text:"Most of our atmosphere is made of chocolate gas.",score:0,reaction:"Oops! Nitrogen makes up 78 percent of our atmosphere!",correct:false},{text:"Nitrogen at 78 percent, with oxygen making up most of the rest.",score:2,reaction:"Outstanding! You know the percentages of our atmosphere!",correct:true}]},
+  {ai:"What is the name given to animals with a backbone?",replies:[{text:"Vertebrates!",score:3,reaction:"Excellent! Animals with backbones are called vertebrates!",correct:true},{text:"Animals with a backbone are called invisible.",score:0,reaction:"Oops! Animals with backbones are called vertebrates!",correct:false},{text:"Vertebrates, including fish, birds, reptiles, mammals and amphibians.",score:2,reaction:"Brilliant! You named all five groups of vertebrates!",correct:true}]},
+  {ai:"What is the nearest planet to the Sun?",replies:[{text:"Mercury!",score:3,reaction:"Correct! Mercury is the closest planet to the Sun!",correct:true},{text:"The nearest planet to the Sun is called Breakfast.",score:0,reaction:"Oops! Mercury is the nearest planet to the Sun!",correct:false},{text:"Mercury, which has extreme temperatures from very hot to very cold.",score:2,reaction:"Great! Mercury has no atmosphere so temperatures swing wildly!",correct:true}]},
+  {ai:"What do we call a scientist who studies living things?",replies:[{text:"A biologist!",score:3,reaction:"Correct! Biologists study living things. Great science knowledge!",correct:true},{text:"A scientist who studies living things is called a baker.",score:0,reaction:"Oops! Bakers make bread. Scientists who study life are biologists!",correct:false},{text:"A biologist, from the Greek word bios meaning life.",score:2,reaction:"Excellent! Biology comes from Greek meaning the study of life!",correct:true}]},
+  {ai:"What is the value of pi approximately?",replies:[{text:"3.14!",score:3,reaction:"Correct! Pi is approximately 3.14. Great maths!",correct:true},{text:"Pi is approximately equal to 100.",score:0,reaction:"Oops! Pi is approximately 3.14, the ratio of a circle's circumference!",correct:false},{text:"3.14, and it goes on forever with no repeating pattern.",score:2,reaction:"Amazing! Pi is an irrational number that never ends or repeats!",correct:true}]},
+  {ai:"In which country were the first modern Olympic Games held?",replies:[{text:"Greece!",score:3,reaction:"Correct! The first modern Olympics were in Athens, Greece in 1896!",correct:true},{text:"The first modern Olympics were held on the Moon.",score:0,reaction:"Oops! The first modern Olympics were in Athens, Greece in 1896!",correct:false},{text:"Greece in 1896, bringing back the ancient Greek tradition.",score:2,reaction:"Brilliant! The ancient Greeks held Olympics over 2,000 years ago!",correct:true}]},
+  {ai:"What is the name of the process by which rocks are broken down over time?",replies:[{text:"Erosion!",score:3,reaction:"Correct! Erosion breaks rocks down over time. Great!",correct:true},{text:"Rocks are broken down by a process called dancing.",score:0,reaction:"Oops! Erosion is the process that breaks down rocks over time!",correct:false},{text:"Erosion, caused by wind, water, and ice over thousands of years.",score:2,reaction:"Excellent! Erosion can carve entire canyons over millions of years!",correct:true}]},
+  {ai:"What is the largest country in the world by area?",replies:[{text:"Russia!",score:3,reaction:"Correct! Russia is the largest country by area. Amazing!",correct:true},{text:"The smallest country is actually the largest.",score:0,reaction:"Oops! Russia is the largest country by area in the world!",correct:false},{text:"Russia, covering 11 time zones across two continents.",score:2,reaction:"Incredible! Russia spans Europe and Asia across 11 time zones!",correct:true}]},
+  {ai:"What is the term for a word that means the same as another word?",replies:[{text:"A synonym!",score:3,reaction:"Correct! Words with the same meaning are called synonyms!",correct:true},{text:"Words with the same meaning are called astronauts.",score:0,reaction:"Oops! Words with the same meaning are called synonyms!",correct:false},{text:"A synonym, like happy and joyful, or big and large.",score:2,reaction:"Perfect examples! Synonyms give us variety in our language!",correct:true}]},
+  {ai:"What is the name of the scientist who developed the theory of relativity?",replies:[{text:"Albert Einstein!",score:3,reaction:"Brilliant! Einstein developed the theory of relativity!",correct:true},{text:"The theory of relativity was developed by a cat.",score:0,reaction:"Oops! Albert Einstein developed the theory of relativity!",correct:false},{text:"Einstein, who also said imagination is more important than knowledge.",score:2,reaction:"Great quote! Einstein was brilliant and also very philosophical!",correct:true}]},
+  {ai:"What do we call a change of state from liquid to gas?",replies:[{text:"Evaporation!",score:3,reaction:"Excellent! Liquid turning to gas is called evaporation!",correct:true},{text:"Liquid turning to gas is called sleeping.",score:0,reaction:"Oops! Liquid turning to gas is called vaporisation or evaporation!",correct:false},{text:"Evaporation, the same process that forms clouds in the sky.",score:2,reaction:"Great connection! Evaporated water forms clouds and then falls as rain!",correct:true}]},
+  {ai:"What is the name of the process when caterpillars transform into butterflies?",replies:[{text:"Metamorphosis!",score:3,reaction:"Outstanding! The transformation is called metamorphosis!",correct:true},{text:"Caterpillars transform through a process called sandwiching.",score:0,reaction:"Oops! The transformation is called metamorphosis!",correct:false},{text:"Metamorphosis, happening inside a chrysalis over several weeks.",score:2,reaction:"Excellent! The chrysalis is where the magical transformation occurs!",correct:true}]},
+  {ai:"What is the name of the force that keeps planets orbiting the sun?",replies:[{text:"Gravity!",score:3,reaction:"Correct! Gravity keeps planets in orbit around the Sun!",correct:true},{text:"Planets stay in orbit because of magic string.",score:0,reaction:"Oops! Gravity from the Sun keeps planets in their orbits!",correct:false},{text:"Gravity, which Isaac Newton described in his laws of motion.",score:2,reaction:"Excellent connection! Newton's law of universal gravitation explains orbits!",correct:true}]},
+  {ai:"How does sound travel?",replies:[{text:"Through vibrations in the air!",score:3,reaction:"Excellent! Sound travels as vibrations through air and other materials!",correct:true},{text:"Sound travels by sitting very still.",score:0,reaction:"Oops! Sound travels through vibrations in air and other materials!",correct:false},{text:"Through vibrations, and sound travels faster through water than air.",score:2,reaction:"Incredible fact! Sound does travel faster through water!",correct:true}]},
+  {ai:"What country is known as the Land of the Rising Sun?",replies:[{text:"Japan!",score:3,reaction:"Correct! Japan is called the Land of the Rising Sun!",correct:true},{text:"Antarctica is the Land of the Rising Sun.",score:0,reaction:"Oops! Japan is the Land of the Rising Sun because it is far east!",correct:false},{text:"Japan, because it is so far east the sun rises there first.",score:2,reaction:"Great explanation! The name comes from Japan's position in the east!",correct:true}]}
+],
+"10-13":[
+  {ai:"What does AI stand for?",replies:[{text:"Artificial Intelligence!",score:3,reaction:"Correct! AI stands for Artificial Intelligence. Great knowledge!",correct:true},{text:"AI stands for Actual Iguanas.",score:0,reaction:"Oops! AI stands for Artificial Intelligence, not Actual Iguanas!",correct:false},{text:"Artificial Intelligence, where machines perform tasks that normally require human thinking.",score:2,reaction:"Excellent definition! You understand the core concept very well!",correct:true}]},
+  {ai:"What is the greenhouse effect?",replies:[{text:"When gases trap heat in Earth's atmosphere, warming the planet.",score:3,reaction:"Brilliant! The greenhouse effect describes how gases trap heat. Well done!",correct:true},{text:"The greenhouse effect is when plants grow inside a glass building.",score:0,reaction:"Oops! That is a greenhouse. The greenhouse effect refers to gases trapping heat in the atmosphere!",correct:false},{text:"Greenhouse gases like CO2 trap heat, which is natural but human activity is increasing it.",score:2,reaction:"Excellent nuance! Some greenhouse effect is natural and necessary!",correct:true}]},
+  {ai:"What does DNA stand for and what does it do?",replies:[{text:"Deoxyribonucleic Acid. It carries genetic information in living things.",score:3,reaction:"Incredible! Full name and function perfectly stated. Outstanding!",correct:true},{text:"DNA stands for Do Not Ask and it tells you to be quiet.",score:0,reaction:"Oops! DNA stands for Deoxyribonucleic Acid and it carries genetic information!",correct:false},{text:"Deoxyribonucleic Acid, which contains the instructions for building every living organism.",score:2,reaction:"Excellent! DNA is essentially the instruction manual for life itself!",correct:true}]},
+  {ai:"What is machine learning?",replies:[{text:"When computers learn from data and improve without being explicitly programmed.",score:3,reaction:"Perfect definition! Machine learning lets computers learn from experience!",correct:true},{text:"Machine learning is when robots go to school and sit in classrooms.",score:0,reaction:"Oops! Machine learning is when algorithms improve automatically from experience and data!",correct:false},{text:"A type of AI where algorithms identify patterns in data to make decisions.",score:2,reaction:"Great! Pattern recognition from data is the heart of machine learning!",correct:true}]},
+  {ai:"What is climate change and what causes it?",replies:[{text:"Long-term shifts in global temperatures, mainly caused by burning fossil fuels.",score:3,reaction:"Excellent comprehensive answer! You understand both the what and the why!",correct:true},{text:"Climate change is when it rains on your birthday.",score:0,reaction:"Oops! Climate change refers to long-term shifts caused mainly by burning fossil fuels!",correct:false},{text:"Human activities release CO2 and other gases that trap heat, raising global temperatures over time.",score:2,reaction:"Great scientific explanation! The CO2 connection is crucial to understand!",correct:true}]},
+  {ai:"What is the difference between renewable and non-renewable energy?",replies:[{text:"Renewable energy replenishes naturally, like solar and wind. Non-renewable runs out, like coal and oil.",score:3,reaction:"Outstanding! Clear accurate distinction with great examples. Brilliant!",correct:true},{text:"Renewable energy is energy that comes from the colour blue.",score:0,reaction:"Oops! Renewable energy replenishes naturally like solar and wind power!",correct:false},{text:"Renewable sources like sun and wind never run out, while fossil fuels will eventually be gone.",score:2,reaction:"Excellent! The timescale comparison really highlights why non-renewables are a problem!",correct:true}]},
+  {ai:"What is the theory of evolution?",replies:[{text:"Species change over time through natural selection, where favourable traits are passed to offspring.",score:3,reaction:"Brilliant! You understand natural selection perfectly. Outstanding!",correct:true},{text:"Evolution is the theory that all animals wear tiny hats.",score:0,reaction:"Oops! Evolution describes how species change over time through natural selection!",correct:false},{text:"Darwin's theory that organisms best adapted to their environment survive and pass on their traits.",score:2,reaction:"Excellent reference to Darwin! Survival of the fittest is a key concept!",correct:true}]},
+  {ai:"What is the difference between a simile and a metaphor?",replies:[{text:"A simile compares using like or as. A metaphor says something IS something else.",score:3,reaction:"Perfect literary knowledge! Great understanding of figurative language!",correct:true},{text:"A simile is a type of sandwich and a metaphor is a type of shoe.",score:0,reaction:"Oops! A simile uses like or as to compare, while a metaphor directly equates two things!",correct:false},{text:"Simile: brave as a lion. Metaphor: he is a lion. Both compare but differently.",score:2,reaction:"Excellent examples! Using examples to explain is a great communication skill!",correct:true}]},
+  {ai:"What is the significance of the Magna Carta?",replies:[{text:"It was a 1215 document that limited the power of the king and established the rule of law.",score:3,reaction:"Outstanding historical knowledge! The Magna Carta was foundational for democracy!",correct:true},{text:"The Magna Carta is a type of sports car invented in 1990.",score:0,reaction:"Oops! The Magna Carta was a 1215 document limiting royal power and establishing the rule of law!",correct:false},{text:"The 1215 agreement that established everyone including rulers must follow the law.",score:2,reaction:"Brilliant! The idea that rulers must obey the law was revolutionary in 1215!",correct:true}]},
+  {ai:"What is the difference between correlation and causation?",replies:[{text:"Correlation means two things are related. Causation means one thing actually causes the other.",score:3,reaction:"Brilliant! This distinction is fundamental to scientific thinking!",correct:true},{text:"Correlation and causation are both types of soup.",score:0,reaction:"Oops! Correlation is a relationship between two things, causation means one causes the other!",correct:false},{text:"Just because two things happen together does not mean one causes the other.",score:2,reaction:"Outstanding! You clearly understand this important logical principle!",correct:true}]},
+  {ai:"How does the internet actually work?",replies:[{text:"Data is broken into packets, sent through networks of servers and cables, then reassembled.",score:3,reaction:"Excellent technical explanation! Packet switching is exactly how the internet works!",correct:true},{text:"The internet works by fairies carrying little letters between computers.",score:0,reaction:"Oops! The internet works through data packets travelling through cables and servers!",correct:false},{text:"Networks of computers connected by fibre optic cables transmit data using agreed protocols.",score:2,reaction:"Great mention of protocols! TCP/IP protocols allow different devices to communicate!",correct:true}]},
+  {ai:"What is the significance of the Industrial Revolution?",replies:[{text:"It transformed societies from agricultural to industrial, introducing machines, factories and economic change.",score:3,reaction:"Excellent! The Industrial Revolution fundamentally changed human society!",correct:true},{text:"The Industrial Revolution was when everyone started eating more vegetables.",score:0,reaction:"Oops! The Industrial Revolution transformed societies through machines and factories!",correct:false},{text:"Beginning in Britain in the 1760s, it mechanised production and led to urbanisation and new social classes.",score:2,reaction:"Great historical detail! Urbanisation and the working class were major consequences!",correct:true}]},
+  {ai:"What is mental health and why is it important?",replies:[{text:"Mental health is our emotional and psychological wellbeing. It affects how we think, feel and cope with life.",score:3,reaction:"Thoughtful and compassionate answer. Mental health awareness is so important!",correct:true},{text:"Mental health means being good at maths.",score:0,reaction:"Oops! Mental health refers to our emotional and psychological wellbeing!",correct:false},{text:"Just like physical health, mental health needs care. Poor mental health affects relationships and physical health.",score:2,reaction:"Great connection between mental and physical health. Holistic wellbeing matters!",correct:true}]},
+  {ai:"What is the difference between fiction and non-fiction?",replies:[{text:"Fiction is invented stories. Non-fiction is based on real facts and events.",score:3,reaction:"Correct and clear! You understand this literary distinction well!",correct:true},{text:"Fiction is real and non-fiction is made up.",score:0,reaction:"Oops! Fiction is invented stories. Non-fiction is based on real facts!",correct:false},{text:"Fiction includes novels and stories from imagination. Non-fiction includes biographies and journalism.",score:2,reaction:"Excellent examples for both categories! You communicate clearly!",correct:true}]},
+  {ai:"Why is biodiversity important?",replies:[{text:"Biodiversity keeps ecosystems stable and provides resources humans depend on.",score:3,reaction:"Outstanding! Ecosystem stability and human dependence are key reasons biodiversity matters!",correct:true},{text:"Biodiversity is important because it makes zoos more interesting.",score:0,reaction:"Oops! Biodiversity is crucial for ecosystem stability and the resources all life depends on!",correct:false},{text:"Diverse ecosystems are more resilient to disease and climate change. Losing species can collapse food chains.",score:2,reaction:"Brilliant! The food chain collapse argument is compelling and scientifically sound!",correct:true}]},
+  {ai:"What is the difference between empathy and sympathy?",replies:[{text:"Empathy is feeling what another person feels. Sympathy is understanding their situation without sharing the feeling.",score:3,reaction:"Brilliant distinction! Understanding empathy versus sympathy shows emotional intelligence!",correct:true},{text:"Empathy is a type of hat and sympathy is a type of shoe.",score:0,reaction:"Oops! Empathy means truly feeling what someone else feels, sympathy means acknowledging their situation!",correct:false},{text:"Empathy puts you in someone else's shoes emotionally. Sympathy acknowledges their pain from the outside.",score:2,reaction:"Great analogy! The shoe metaphor perfectly captures the difference!",correct:true}]},
+  {ai:"What is the difference between a hypothesis and a theory in science?",replies:[{text:"A hypothesis is an untested prediction. A theory is a well-tested explanation supported by evidence.",score:3,reaction:"Perfect scientific understanding! This distinction is fundamental to the scientific method!",correct:true},{text:"A hypothesis is a type of food and a theory is a sports team.",score:0,reaction:"Oops! A hypothesis is an untested prediction and a theory is a well-supported explanation!",correct:false},{text:"Hypotheses are educated guesses to be tested. Theories have been tested repeatedly with strong evidence.",score:2,reaction:"Excellent! In science, theory means much more than just a guess!",correct:true}]},
+  {ai:"How does social media affect communication and relationships?",replies:[{text:"It enables instant global connection but can reduce face-to-face interaction and create superficial relationships.",score:3,reaction:"Thoughtful balanced answer! You considered both benefits and drawbacks!",correct:true},{text:"Social media makes everyone fly through the air.",score:0,reaction:"Oops! Social media affects how we communicate and form relationships, both positively and negatively!",correct:false},{text:"It connects people across distances but algorithms can create echo chambers and harm mental health.",score:2,reaction:"Outstanding! Echo chambers and comparison culture are sophisticated concerns!",correct:true}]},
+  {ai:"What was the significance of the moon landing in 1969?",replies:[{text:"It was the first time humans set foot on another world, a massive scientific and Cold War achievement.",score:3,reaction:"Excellent! You captured both the scientific and geopolitical significance!",correct:true},{text:"The 1969 moon landing was when the moon invented the internet.",score:0,reaction:"Oops! The 1969 moon landing was when Apollo 11 astronauts first walked on the Moon!",correct:false},{text:"Apollo 11 showed what human ingenuity could achieve and intensified the Space Race between the USA and USSR.",score:2,reaction:"Great Cold War context! The Space Race was driven by intense rivalry between superpowers!",correct:true}]},
+  {ai:"What are human rights and why do they matter?",replies:[{text:"Basic rights and freedoms every person is entitled to regardless of nationality, gender or religion.",score:3,reaction:"Excellent! Universal entitlement regardless of background is the core concept of human rights!",correct:true},{text:"Human rights are the right to eat unlimited cake whenever you want.",score:0,reaction:"Oops! Human rights are fundamental freedoms every person is entitled to!",correct:false},{text:"Rights like freedom of speech and education are universal and cannot be taken away by governments.",score:2,reaction:"Great specifics! Universality and inalienability are what make human rights special!",correct:true}]},
+  {ai:"What is the difference between deductive and inductive reasoning?",replies:[{text:"Deductive goes from general rules to specific conclusions. Inductive goes from specific observations to general conclusions.",score:3,reaction:"Outstanding logical thinking! You understand both forms of reasoning perfectly!",correct:true},{text:"Deductive reasoning is a type of dance and inductive is a cooking method.",score:0,reaction:"Oops! Deductive reasoning moves from general to specific, inductive from specific to general!",correct:false},{text:"Deductive: all mammals breathe air, dolphins are mammals, so dolphins breathe air. Inductive builds general rules from patterns.",score:2,reaction:"Brilliant example! It shows exactly how deductive logic flows!",correct:true}]},
+  {ai:"Why is freedom of the press important in a democracy?",replies:[{text:"A free press holds governments accountable, informs citizens and protects against corruption.",score:3,reaction:"Excellent! Accountability and informing citizens are the twin pillars of press freedom!",correct:true},{text:"Freedom of the press is important so newspapers can print pictures of cats.",score:0,reaction:"Oops! A free press holds governments accountable and keeps citizens informed!",correct:false},{text:"Without independent media, governments can control information and citizens cannot make informed decisions.",score:2,reaction:"Outstanding! Information control is exactly how authoritarian governments maintain power!",correct:true}]},
+  {ai:"What does it mean to think critically?",replies:[{text:"Analysing information objectively, questioning assumptions, and evaluating evidence before forming conclusions.",score:3,reaction:"Brilliant definition! Critical thinking is one of the most valuable skills you can develop!",correct:true},{text:"Thinking critically means being mean and criticising everything.",score:0,reaction:"Oops! Critical thinking means objectively analysing information and questioning assumptions!",correct:false},{text:"Critical thinkers ask who created this, why, what evidence exists, and what perspectives are missing.",score:2,reaction:"Excellent framework! Those four questions are a great starting point for critical analysis!",correct:true}]},
+  {ai:"What is the relationship between technology and inequality?",replies:[{text:"Technology can increase inequality if only the wealthy access it, but can also reduce it through education.",score:3,reaction:"Outstanding nuanced thinking! You considered both sides of a complex issue!",correct:true},{text:"Technology and inequality are both types of cheese.",score:0,reaction:"Oops! Technology can both increase and reduce inequality depending on who has access to it!",correct:false},{text:"The digital divide means wealthy nations benefit more from technology while others are left behind.",score:2,reaction:"Excellent! The digital divide is a real and growing global challenge worth understanding!",correct:true}]},
+  {ai:"What makes a good leader?",replies:[{text:"Good leaders communicate clearly, inspire others, make decisions under pressure and take responsibility.",score:3,reaction:"Excellent leadership qualities! You understand what effective leadership really means!",correct:true},{text:"A good leader is someone who is the tallest person in the room.",score:0,reaction:"Oops! Good leadership is about communication, inspiration and decision-making, not height!",correct:false},{text:"Leaders need emotional intelligence to understand their team, humility to admit mistakes and vision to inspire action.",score:2,reaction:"Brilliant! Emotional intelligence and humility are what separate great leaders from average ones!",correct:true}]},
+  {ai:"What is propaganda and how can we identify it?",replies:[{text:"Propaganda uses biased information to influence opinions. Look for emotional language and lack of evidence.",score:3,reaction:"Outstanding critical thinking! Identifying propaganda is an essential skill today!",correct:true},{text:"Propaganda is a type of pasta dish from Italy.",score:0,reaction:"Oops! Propaganda is biased information designed to influence people's beliefs!",correct:false},{text:"Propaganda simplifies complex issues and omits contradictory evidence. Always check multiple sources.",score:2,reaction:"Excellent practical advice! Checking multiple sources is always the right approach!",correct:true}]},
+  {ai:"How does inflation affect everyday life?",replies:[{text:"Inflation means prices rise so money buys less, affecting purchasing power, savings and living standards.",score:3,reaction:"Excellent economic understanding! Inflation's effect on purchasing power is the key concept!",correct:true},{text:"Inflation is when you blow up a balloon very quickly.",score:0,reaction:"Oops! Economic inflation means rising prices that reduce how much your money can buy!",correct:false},{text:"When inflation is high, wages may not keep up and people struggle to afford basics.",score:2,reaction:"Great practical consequences! The wage gap is one of the most damaging effects of inflation!",correct:true}]},
+  {ai:"What is the significance of the Industrial Revolution for the environment?",replies:[{text:"It began large-scale burning of fossil fuels, starting pollution and the CO2 emissions that drive climate change.",score:3,reaction:"Excellent! The Industrial Revolution marked the beginning of our current environmental challenges!",correct:true},{text:"The Industrial Revolution was great for the environment because factories are pretty.",score:0,reaction:"Oops! The Industrial Revolution began mass fossil fuel use, starting our environmental challenges!",correct:false},{text:"Mass coal burning and factory emissions created air pollution and began the CO2 buildup we face today.",score:2,reaction:"Great historical-environmental connection! Today's climate crisis has roots in 1760s Britain!",correct:true}]},
+  {ai:"What is the difference between weather and climate?",replies:[{text:"Weather is short-term atmospheric conditions. Climate is long-term average weather patterns in a region.",score:3,reaction:"Perfect distinction! Weather is what you get, climate is what you expect!",correct:true},{text:"Weather is a type of sandwich and climate is a sport.",score:0,reaction:"Oops! Weather is daily conditions like rain or sun. Climate is the long-term patterns of those conditions!",correct:false},{text:"Weather changes daily. Climate is the average of weather over 30 or more years in an area.",score:2,reaction:"Great! The 30-year timeframe is the standard definition scientists use for climate!",correct:true}]}
+]};
+
+function shuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
+}
+
+function buildMission(ageGroup, charName, kidName) {
+  var pool = shuffle(QUESTIONS[ageGroup]);
+  var steps = pool.slice(0, 5).map(function(q) {
+    return { ai: q.ai, replies: shuffle(q.replies) };
+  });
+  var topics = { '5-6':'Fun Questions', '7-9':'Challenge Quiz', '10-13':'Deep Thinking' };
+  return { title: charName + ' and ' + kidName + ': ' + topics[ageGroup], steps: steps };
+}
+
+var CHARACTERS = [
+  { id:'zara', name:'Zara', emoji:'🤖', desc:'Friendly Robot' },
+  { id:'finn', name:'Finn', emoji:'🐬', desc:'Ocean Explorer' },
+  { id:'leo',  name:'Leo',  emoji:'🦁', desc:'Jungle King' }
+];
+var AGE_GROUPS = [
+  { id:'5-6',   label:'Ages 5-6',   emoji:'🌱', desc:'Simple & fun' },
+  { id:'7-9',   label:'Ages 7-9',   emoji:'🌟', desc:'Getting clever' },
+  { id:'10-13', label:'Ages 10-13', emoji:'🚀', desc:'Deep thinker' }
+];
+var TIMER_OPTIONS = [30, 60, 90, 120];
+var MAX_LIVES = 3;
+
+function App() {
+  var s = useState;
+  var phase       = s('start');
+  var nameInput   = s('');
+  var kidName     = s('');
+  var ageGroup    = s('');
+  var charId      = s('');
+  var timerSec    = s(90);
+  var mission     = s(null);
+  var stepIdx     = s(0);
+  var chatLog     = s([]);
+  var showReplies = s(false);
+  var typing      = s(false);
+  var locked      = s(false);
+  var score       = s(0);
+  var lives       = s(MAX_LIVES);
+  var timeLeft    = s(90);
+  var feedback    = s(null);
+
+  var setPhase       = phase[1];       phase       = phase[0];
+  var setNameInput   = nameInput[1];   nameInput   = nameInput[0];
+  var setKidName     = kidName[1];     kidName     = kidName[0];
+  var setAgeGroup    = ageGroup[1];    ageGroup    = ageGroup[0];
+  var setCharId      = charId[1];      charId      = charId[0];
+  var setTimerSec    = timerSec[1];    timerSec    = timerSec[0];
+  var setMission     = mission[1];     mission     = mission[0];
+  var setStepIdx     = stepIdx[1];     stepIdx     = stepIdx[0];
+  var setChatLog     = chatLog[1];     chatLog     = chatLog[0];
+  var setShowReplies = showReplies[1]; showReplies = showReplies[0];
+  var setTyping      = typing[1];      typing      = typing[0];
+  var setLocked      = locked[1];      locked      = locked[0];
+  var setScore       = score[1];       score       = score[0];
+  var setLives       = lives[1];       lives       = lives[0];
+  var setTimeLeft    = timeLeft[1];    timeLeft    = timeLeft[0];
+  var setFeedback    = feedback[1];    feedback    = feedback[0];
+
+  var chatEndRef  = useRef(null);
+  var missionRef  = useRef(null);
+  var stepRef     = useRef(0);
+  var livesRef    = useRef(MAX_LIVES);
+  var timerRef    = useRef(null);
+
+  var char = CHARACTERS.find(function(c){ return c.id === charId; }) || CHARACTERS[0];
+
+  useEffect(function(){
+    if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior:'smooth' });
+  }, [chatLog, typing, showReplies, feedback]);
+
+  var showAiMsg = useCallback(function(m, idx) {
+    if (!m || !m.steps || idx >= m.steps.length) return;
+    var txt = m.steps[idx].ai;
+    setTyping(true);
+    setTimeout(function(){
+      setTyping(false);
+      setChatLog(function(l){ return l.concat([{ role:'ai', text:txt }]); });
+      setShowReplies(true);
+      say(txt);
+      saySequence(m.steps[idx].replies.map(function(r){ return r.text; }));
+    }, Math.min(700 + txt.length * 11, 1800));
+  }, []);
+
+  var handleTimeout = useCallback(function(){
+    var m = missionRef.current;
+    var idx = stepRef.current;
+    if (!m) return;
+    setLocked(true); setShowReplies(false);
+    var newLives = livesRef.current - 1;
+    livesRef.current = newLives;
+    setLives(newLives);
+    say(rnd(PHRASES.timeout));
+    setFeedback({ emoji:'⏰', txt:'Time is up! You lost a heart!', color:'#dc2626' });
+    setChatLog(function(l){ return l.concat([{ role:'user', text:'Time ran out!', isWrong:true }]); });
+    setTimeout(function(){ setFeedback(null); }, 1500);
+    if (newLives <= 0) { setTimeout(function(){ setPhase('gameover'); }, 1800); return; }
+    var cr = m.steps[idx].replies.find(function(r){ return r.correct && r.score === 3; })
+          || m.steps[idx].replies.find(function(r){ return r.correct; });
+    var reaction = cr ? 'Time is up! The best answer was: ' + cr.text + '. Keep going!' : 'Time is up! Keep going!';
+    setTimeout(function(){
+      setTyping(true);
+      setTimeout(function(){
+        setTyping(false);
+        setChatLog(function(l){ return l.concat([{ role:'ai', text:reaction }]); });
+        say(reaction);
+        advanceStep(m, idx);
+      }, 1200);
+    }, 1800);
+  }, []);
+
+  useEffect(function(){
+    if (!showReplies || locked) return;
+    setTimeLeft(timerSec);
+    timerRef.current = setInterval(function(){
+      setTimeLeft(function(t){
+        if (t <= 1) { clearInterval(timerRef.current); handleTimeout(); return 0; }
+        return t - 1;
+      });
+    }, 1000);
+    return function(){ clearInterval(timerRef.current); };
+  }, [showReplies, locked, timerSec, handleTimeout]);
+
+  function advanceStep(m, idx) {
+    var next = idx + 1;
+    if (next >= m.steps.length) {
+      setTimeout(function(){ setPhase('result'); }, 700);
+    } else {
+      stepRef.current = next;
+      setStepIdx(next);
+      setTimeout(function(){ setLocked(false); showAiMsg(m, next); }, 500);
+    }
+  }
+
+  function startGame() {
+    if (!ageGroup || !charId) { alert('Please pick an age group and a Chat Pal!'); return; }
+    resetAudioQueue();
+    var name = nameInput.trim() || 'Friend';
+    setKidName(name);
+    var m = buildMission(ageGroup, char.name, name);
+    missionRef.current = m;
+    stepRef.current = 0;
+    livesRef.current = MAX_LIVES;
+    setMission(m);
+    setStepIdx(0);
+    setScore(0);
+    setLives(MAX_LIVES);
+    setChatLog([]);
+    setShowReplies(false);
+    setLocked(false);
+    setFeedback(null);
+    say(rnd(PHRASES.start));
+    setPhase('chat');
+    setTimeout(function(){ showAiMsg(m, 0); }, 800);
+  }
+
+  function pickReply(reply) {
+    if (locked) return;
+    clearInterval(timerRef.current);
+    setLocked(true); setShowReplies(false);
+    var m = missionRef.current;
+    var sIdx = stepRef.current;
+    var isCorrect = reply.correct !== false && reply.score > 0;
+    setChatLog(function(l){ return l.concat([{ role:'user', text:reply.text, isWrong:!isCorrect }]); });
+    if (isCorrect) {
+      setScore(function(sc){ return sc + reply.score; });
+      say(reply.score === 3 ? rnd(PHRASES.perfect) : rnd(PHRASES.correct));
+      setFeedback({ emoji:'⭐', txt: reply.score === 3 ? 'Amazing answer!' : 'Good job!', color:'#16a34a' });
+    } else {
+      var newLives = livesRef.current - 1;
+      livesRef.current = newLives; setLives(newLives);
+      say(rnd(PHRASES.wrong));
+      setFeedback({ emoji:'💔', txt:'Wrong answer! Lost a heart!', color:'#dc2626' });
+      if (newLives <= 0) {
+        setTimeout(function(){ setFeedback(null); }, 1400);
+        say(rnd(PHRASES.gameover));
+        setTimeout(function(){
+          setTyping(true);
+          setTimeout(function(){
+            setTyping(false);
+            setChatLog(function(l){ return l.concat([{ role:'ai', text:reply.reaction }]); });
+            say(reply.reaction);
+            setTimeout(function(){ setPhase('gameover'); }, 900);
+          }, 1000);
+        }, 1500);
+        return;
+      }
+    }
+    setTimeout(function(){ setFeedback(null); }, 1400);
+    setTimeout(function(){
+      setTyping(true);
+      setTimeout(function(){
+        setTyping(false);
+        setChatLog(function(l){ return l.concat([{ role:'ai', text:reply.reaction }]); });
+        say(reply.reaction);
+        advanceStep(m, sIdx);
+      }, Math.min(500 + reply.reaction.length * 11, 1800));
+    }, 1500);
+  }
+
+  function exitGame() {
+    clearInterval(timerRef.current);
+    resetAudioQueue();
+    setPhase('start'); setMission(null);
+  }
+
+  function playAgain() {
+    clearInterval(timerRef.current);
+    resetAudioQueue();
+    var m = buildMission(ageGroup, char.name, kidName);
+    missionRef.current = m;
+    stepRef.current = 0;
+    livesRef.current = MAX_LIVES;
+    setMission(m);
+    setStepIdx(0); setScore(0); setLives(MAX_LIVES);
+    setChatLog([]); setShowReplies(false); setLocked(false); setFeedback(null);
+    say(rnd(PHRASES.start));
+    setPhase('chat');
+    setTimeout(function(){ showAiMsg(m, 0); }, 800);
+  }
+
+  var timerColor = timeLeft > timerSec * 0.5 ? '#7c3aed' : timeLeft > timerSec * 0.25 ? '#f59e0b' : '#dc2626';
+  var timerPct   = (timeLeft / timerSec) * 100;
+
+  // ── Start ──
+  if (phase === 'start') return (
+    React.createElement('div', { className:'screen' },
+      React.createElement('div', { className:'title' },
+        React.createElement('div', { className:'stars' }, '⭐🌟✨'),
+        React.createElement('h1', null, 'Chat Pals'),
+        React.createElement('p', null, 'Challenge Mode — ❤️❤️❤️ 3 Lives · ⏱️ ' + timerSec + 's Timer')
+      ),
+      React.createElement('div', { className:'section-label' }, 'Your name'),
+      React.createElement('input', { className:'name-input', value:nameInput, placeholder:'Enter your name...', onChange:function(e){ setNameInput(e.target.value); }, onKeyDown:function(e){ if(e.key==='Enter') startGame(); } }),
+      React.createElement('div', { className:'section-label' }, 'Age group'),
+      React.createElement('div', { className:'grid3' },
+        AGE_GROUPS.map(function(g){
+          return React.createElement('button', { key:g.id, className:'sel-btn' + (ageGroup===g.id?' sel':''), onClick:function(){ setAgeGroup(g.id); } },
+            React.createElement('span', { className:'ico' }, g.emoji),
+            React.createElement('span', { className:'lbl' }, g.label),
+            React.createElement('span', { className:'sub' }, g.desc)
+          );
+        })
+      ),
+      React.createElement('div', { className:'section-label' }, 'Timer per question'),
+      React.createElement('div', { className:'grid4' },
+        TIMER_OPTIONS.map(function(t){
+          return React.createElement('button', { key:t, className:'timer-opt' + (timerSec===t?' sel':''), onClick:function(){ setTimerSec(t); } }, t + 's');
+        })
+      ),
+      React.createElement('div', { className:'section-label' }, 'Choose your Chat Pal'),
+      React.createElement('div', { className:'grid3' },
+        CHARACTERS.map(function(c){
+          return React.createElement('button', { key:c.id, className:'sel-btn' + (charId===c.id?' sel':''), onClick:function(){ setCharId(c.id); } },
+            React.createElement('span', { className:'ico' }, c.emoji),
+            React.createElement('span', { className:'lbl' }, c.name),
+            React.createElement('span', { className:'sub' }, c.desc)
+          );
+        })
+      ),
+      React.createElement('button', { className:'start-btn', onClick:startGame, style:{ background: ageGroup&&charId ? 'linear-gradient(135deg,#7c3aed,#a855f7)' : '#ccc', cursor: ageGroup&&charId ? 'pointer' : 'not-allowed' } },
+        ageGroup && charId ? 'Start Challenge! 🚀' : 'Pick age group and pal first'
+      )
+    )
+  );
+
+  // ── Chat ──
+  if (phase === 'chat' && mission) return (
+    React.createElement('div', { className:'screen' },
+      React.createElement('div', { className:'hud' },
+        React.createElement('div', { className:'lives' },
+          Array.from({ length:MAX_LIVES }).map(function(_,i){ return React.createElement('span', { key:i }, i < lives ? '❤️' : '🖤'); })
+        ),
+        React.createElement('div', { style:{ display:'flex', gap:10, alignItems:'center' } },
+          React.createElement('span', { style:{ fontSize:13, fontWeight:700, color:'#7c3aed' } }, '⭐ ' + score),
+          React.createElement('button', { className:'exit-btn', onClick:exitGame }, '✕ Exit')
+        )
+      ),
+      React.createElement('div', { className:'timer-wrap' },
+        React.createElement('div', { style:{ display:'flex', justifyContent:'space-between', fontSize:12, color:timerColor, fontWeight:700, marginBottom:4 } },
+          React.createElement('span', null, '⏱️ Time'),
+          React.createElement('span', null, timeLeft + 's')
+        ),
+        React.createElement('div', { className:'timer-bar' },
+          React.createElement('div', { className:'timer-fill', style:{ width:timerPct+'%', background:timerColor } })
+        )
+      ),
+      React.createElement('div', { className:'mission-header' },
+        React.createElement('div', { className:'char-face-sm' }, char.emoji),
+        React.createElement('div', null,
+          React.createElement('div', { className:'char-name' }, char.name),
+          React.createElement('div', { className:'mission-lbl' }, mission.title + ' · Round ' + (stepIdx+1) + '/' + mission.steps.length)
+        )
+      ),
+      React.createElement('div', { className:'progress-bar' },
+        React.createElement('div', { className:'progress-fill', style:{ width: (stepIdx/mission.steps.length*100)+'%' } })
+      ),
+      React.createElement('div', { className:'chat-area' },
+        chatLog.map(function(msg, i){
+          return React.createElement('div', { key:i, className:'bubble-wrap ' + msg.role },
+            msg.role === 'ai' && React.createElement('span', { className:'bubble-avatar' }, char.emoji),
+            React.createElement('div', { className:'bubble ' + (msg.role==='user' ? (msg.isWrong?'wrong-user':'user') : 'ai') }, msg.text),
+            msg.role === 'user' && React.createElement('span', { className:'bubble-avatar' }, '🧒')
+          );
+        }),
+        typing && React.createElement('div', { className:'bubble-wrap ai' },
+          React.createElement('span', { className:'bubble-avatar' }, char.emoji),
+          React.createElement('div', { className:'typing' },
+            React.createElement('div', { className:'dot' }), React.createElement('div', { className:'dot' }), React.createElement('div', { className:'dot' })
+          )
+        ),
+        feedback && React.createElement('div', { className:'feedback-pop', style:{ color:feedback.color } },
+          React.createElement('div', { className:'feedback-emoji' }, feedback.emoji),
+          React.createElement('div', { className:'feedback-txt' }, feedback.txt)
+        ),
+        React.createElement('div', { ref:chatEndRef })
+      ),
+      showReplies && mission.steps[stepIdx] && React.createElement('div', { className:'reply-area' },
+        React.createElement('div', { className:'reply-hint' }, 'Pick the best reply! 👇'),
+        mission.steps[stepIdx].replies.map(function(r, i){
+          return React.createElement('button', { key:i, className:'reply-btn', disabled:locked, onClick:function(){ pickReply(r); } }, r.text);
+        })
+      )
+    )
+  );
+
+  // ── Game Over ──
+  if (phase === 'gameover') return (
+    React.createElement('div', { className:'screen' },
+      React.createElement('div', { className:'gameover' },
+        React.createElement('div', { className:'face' }, '💔'),
+        React.createElement('h2', null, 'Game Over!'),
+        React.createElement('p', null, kidName + ', you ran out of hearts! Better luck next time!'),
+        React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, margin:'14px 0' } },
+          React.createElement('div', { className:'stat-card' }, React.createElement('div', { className:'stat-val' }, score), React.createElement('div', { className:'stat-lbl' }, 'Stars earned')),
+          React.createElement('div', { className:'stat-card' }, React.createElement('div', { className:'stat-val' }, (stepIdx+1) + '/' + (mission && mission.steps ? mission.steps.length : 5)), React.createElement('div', { className:'stat-lbl' }, 'Rounds done'))
+        )
+      ),
+      React.createElement('button', { className:'big-btn', onClick:playAgain, style:{ background:'linear-gradient(135deg,#7c3aed,#a855f7)', color:'#fff' } }, 'Try Again! 💪'),
+      React.createElement('button', { className:'big-btn', onClick:exitGame, style:{ background:'#ede9fe', color:'#5b21b6' } }, 'Change Settings 🔧')
+    )
+  );
+
+  // ── Result ──
+  if (phase === 'result' && mission) {
+    var max = mission.steps.length * 3;
+    var pct = Math.round((score / max) * 100);
+    var verdict = pct >= 90 ? 'Unbeatable! 🏆' : pct >= 70 ? 'Champion! 🌟' : pct >= 50 ? 'Well done! 👍' : 'Good effort! 💪';
+    return (
+      React.createElement('div', { className:'screen', style:{ textAlign:'center' } },
+        React.createElement('div', { style:{ fontSize:56, marginBottom:6 } }, char.emoji),
+        React.createElement('div', { style:{ fontSize:20, fontWeight:800, color:'#5b21b6', marginBottom:4 } }, kidName + ', ' + verdict),
+        React.createElement('div', { className:'stat-grid' },
+          React.createElement('div', { className:'stat-card' }, React.createElement('div', { className:'stat-val' }, score), React.createElement('div', { className:'stat-lbl' }, 'Stars')),
+          React.createElement('div', { className:'stat-card' }, React.createElement('div', { className:'stat-val' }, pct + '%'), React.createElement('div', { className:'stat-lbl' }, 'Score')),
+          React.createElement('div', { className:'stat-card' }, React.createElement('div', { className:'stat-val' }, Array.from({ length:lives }).map(function(){ return '❤️'; }).join('') || '💔'), React.createElement('div', { className:'stat-lbl' }, 'Lives left'))
+        ),
+        React.createElement('div', { className:'badge-row' },
+          pct >= 90 && React.createElement('span', { className:'badge' }, '🏆 Perfect!'),
+          pct >= 70 && React.createElement('span', { className:'badge' }, '💬 Great Chatter'),
+          lives === MAX_LIVES && React.createElement('span', { className:'badge' }, '🛡️ No Lives Lost'),
+          lives > 0 && React.createElement('span', { className:'badge' }, '✅ Mission Complete'),
+          React.createElement('span', { className:'badge' }, '🌟 Curious Mind')
+        ),
+        React.createElement('button', { className:'big-btn', onClick:playAgain, style:{ background:'linear-gradient(135deg,#7c3aed,#a855f7)', color:'#fff' } }, 'Play Again! 🎲'),
+        React.createElement('button', { className:'big-btn', onClick:exitGame, style:{ background:'#ede9fe', color:'#5b21b6' } }, 'Change Settings 🔧')
+      )
+    );
+  }
+
+  return null;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+</script>
+</body>
+</html>
